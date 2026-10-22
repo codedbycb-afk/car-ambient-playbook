@@ -6,340 +6,201 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
 <title>Car Ambient Launch Playbook</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 </head>
 <body>
 <style>
-/* Layout: one 760px reading column, numbered weeks as a real sequence, data tables in their own scroll wells. */
+/* Layout: one 680px column. Nine big steps, each one line + a <details> dropdown. Links are the content. */
 :root{
   --bg:#f6f5f2; --surface:#ffffff; --ink:#15161c; --muted:#5d606d; --line:#dcdad3;
   --accent:#5b3df5; --accent-ink:#ffffff; --glow:#efeaff;
-  --good:#1f7a4d; --warn:#b4600c; --bad:#b42323; --good-bg:#e4f3ea; --warn-bg:#fbeedd; --bad-bg:#fbe3e3;
-  --display:"Syne",ui-sans-serif,system-ui,sans-serif; --body:"Manrope",ui-sans-serif,system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --good:#1f7a4d; --warn:#b4600c; --good-bg:#e4f3ea; --warn-bg:#fbeedd;
+  --display:"Syne",ui-sans-serif,system-ui,sans-serif; --body:"Manrope",ui-sans-serif,system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#101117; --surface:#181a22; --ink:#eceaf4; --muted:#a2a3b3; --line:#2b2d3a;
-  --accent:#9d8bff; --accent-ink:#13112a; --glow:#241f45;
-  --good:#5fd196; --warn:#f0a85a; --bad:#f07b7b; --good-bg:#15291f; --warn-bg:#33230f; --bad-bg:#361616; color-scheme:dark }}
+  --accent:#9d8bff; --accent-ink:#13112a; --glow:#241f45; --good:#5fd196; --warn:#f0a85a; --good-bg:#15291f; --warn-bg:#33230f; color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#101117; --surface:#181a22; --ink:#eceaf4; --muted:#a2a3b3; --line:#2b2d3a;
-  --accent:#9d8bff; --accent-ink:#13112a; --glow:#241f45;
-  --good:#5fd196; --warn:#f0a85a; --bad:#f07b7b; --good-bg:#15291f; --warn-bg:#33230f; --bad-bg:#361616; color-scheme:dark }
+  --accent:#9d8bff; --accent-ink:#13112a; --glow:#241f45; --good:#5fd196; --warn:#f0a85a; --good-bg:#15291f; --warn-bg:#33230f; color-scheme:dark }
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;margin:0;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
-.wrap{max-width:760px;margin:0 auto}
-h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
-h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:800;letter-spacing:-.02em}
-h2{font-size:1.5rem;font-weight:700;margin-top:3.5rem;margin-bottom:1rem;padding-top:1.25rem;border-top:2px solid var(--ink)}
-h3{font-size:1.1rem;font-weight:700;margin-top:1.75rem;margin-bottom:.5rem}
-p{margin:0 0 1rem;max-width:66ch}
-ul,ol{padding-left:1.25rem;margin:0 0 1rem}li{margin-bottom:.35rem}
-a{color:var(--accent)}
-.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-header{padding-block:3rem 1.5rem}
-header .meta{display:flex;flex-wrap:wrap;gap:.5rem 1.25rem;margin-top:1rem;font-size:.85rem;color:var(--muted)}
-.verdict{background:var(--glow);border:1px solid var(--line);border-radius:14px;padding:1.5rem;margin:1.5rem 0}
-.verdict h3{margin-top:0;font-size:1.25rem}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;margin:1.25rem 0}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.85rem 1rem;min-width:0}
-.kpi b{display:block;font-family:var(--mono);font-size:1.35rem;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.kpi span{font-size:.78rem;color:var(--muted)}
-.note{border-left:3px solid var(--accent);padding:.6rem 1rem;background:var(--surface);border-radius:0 8px 8px 0;margin:1rem 0;font-size:.95rem}
-.note.warn{border-color:var(--warn);background:var(--warn-bg)}
-.note.bad{border-color:var(--bad);background:var(--bad-bg)}
-.note.good{border-color:var(--good);background:var(--good-bg)}
-.tablewell{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:1rem 0}
-table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:560px}
-th,td{padding:.55rem .75rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
-th{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--bg)}
-tr:last-child td{border-bottom:0}
-td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.82rem}
-.pill{display:inline-block;font-family:var(--mono);font-size:.68rem;padding:.12rem .5rem;border-radius:999px;font-weight:600;letter-spacing:.04em;white-space:nowrap}
-.pill.good{background:var(--good-bg);color:var(--good)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}
-.week{display:grid;grid-template-columns:72px 1fr;gap:1rem;padding:1.25rem 0;border-bottom:1px solid var(--line)}
-.week:last-of-type{border-bottom:0}
-.week .n{font-family:var(--display);font-weight:800;font-size:1.6rem;line-height:1;color:var(--accent)}
-.week .n small{display:block;font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;color:var(--muted);margin-top:.35rem;font-weight:400}
-.week h3{margin-top:0}
-.who{font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-left:.4rem}
-.check{list-style:none;padding:0}
-.check li{display:grid;grid-template-columns:20px 1fr;gap:.6rem;align-items:start;margin-bottom:.45rem}
-.check li::before{content:"";width:16px;height:16px;border:1.5px solid var(--muted);border-radius:4px;margin-top:.3rem;display:block}
-.hook{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;margin:.6rem 0;font-size:.95rem}
-.hook .src{font-family:var(--mono);font-size:.68rem;color:var(--muted);display:block;margin-top:.4rem;letter-spacing:.04em}
-.math{font-family:var(--mono);font-size:.84rem;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem;overflow-x:auto;white-space:pre;line-height:1.7}
-.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
-.two>div{min-width:0}
-.sources{font-size:.82rem;color:var(--muted);columns:1}
-.sources li{margin-bottom:.25rem;overflow-wrap:anywhere}
-@media (max-width:480px){.week{grid-template-columns:52px 1fr}.week .n{font-size:1.3rem}}
-@media (prefers-reduced-motion:no-preference){a{transition:color .15s}}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
+.wrap{max-width:680px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.1;margin:0}
+h1{font-size:clamp(2rem,7vw,3rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.15rem;font-weight:700;margin:2.5rem 0 .75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono);font-size:.78rem}
+p{margin:0 0 .9rem;max-width:62ch}
+ul,ol{padding-left:1.2rem;margin:0 0 .9rem}li{margin-bottom:.4rem}
+a{color:var(--accent);font-weight:600;text-decoration-thickness:1.5px;text-underline-offset:2px}
 a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+header{padding-block:2.75rem 1rem}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:1.15rem;margin-top:.9rem}
+.box{background:var(--glow);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.25rem;margin:1rem 0}
+.box h3{font-size:1.05rem;margin-bottom:.5rem}
+.box ul{margin-bottom:0}
+.step{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin:.7rem 0;overflow:hidden}
+.step summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:44px 1fr auto;gap:.9rem;align-items:center;padding:.95rem 1.1rem;font-weight:600;font-size:1.05rem}
+.step summary::-webkit-details-marker{display:none}
+.step summary .n{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--accent);line-height:1}
+.step summary .who{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.step summary .t small{display:block;font-weight:500;font-size:.88rem;color:var(--muted);margin-top:.15rem}
+.step summary::after{content:"+";grid-column:3;grid-row:1;justify-self:end;font-family:var(--mono);color:var(--muted);margin-left:.5rem}
+.step[open] summary::after{content:"–"}
+.step .body{padding:0 1.1rem 1.1rem 1.1rem;border-top:1px solid var(--line);font-size:.97rem}
+.step .body>*:first-child{margin-top:1rem}
+.step .who-row{display:flex;gap:1rem;flex-wrap:wrap}
+.tag{display:inline-block;font-family:var(--mono);font-size:.66rem;padding:.14rem .5rem;border-radius:999px;font-weight:600;letter-spacing:.04em}
+.tag.cb{background:var(--glow);color:var(--accent)}
+.tag.sis{background:var(--good-bg);color:var(--good)}
+.tag.both{background:var(--warn-bg);color:var(--warn)}
+.check{list-style:none;padding:0}
+.check li{display:grid;grid-template-columns:18px 1fr;gap:.6rem;align-items:start;margin-bottom:.5rem}
+.check li::before{content:"";width:15px;height:15px;border:1.5px solid var(--muted);border-radius:4px;margin-top:.3rem;display:block}
+.money{font-family:var(--mono);font-size:.86rem;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;white-space:pre;overflow-x:auto;line-height:1.7}
+.links li{overflow-wrap:anywhere}
+.note{font-size:.92rem;color:var(--muted)}
+@media (max-width:480px){.step summary{grid-template-columns:36px 1fr auto;gap:.6rem}.step summary .n{font-size:1.2rem}}
 </style>
 
 <div class="wrap">
 <header>
-  <div class="eyebrow">Twenty47 · research brief · 21 Oct 2026</div>
+  <div class="eyebrow">Twenty47 · CB + sister · 21 Oct 2026</div>
   <h1>Car Ambient Launch Playbook</h1>
-  <p style="margin-top:1rem;font-size:1.1rem;max-width:60ch">What to sell, what it costs, how the 2026 dropshipping model actually works now, and an 8-week plan from zero to profitable ad days. Built from live Amazon, TikTok Shop, Meta Ad Library, Alibaba and Reddit data pulled today.</p>
-  <div class="meta"><span>Data: 100 Amazon listings · 655 active Meta ads · 89 Alibaba suppliers · 200 Reddit posts/comments · 3 competitor stores</span></div>
+  <p class="lede">Nine steps. Do them in order. Tap a step to see the details and the links.</p>
+  <div class="who-row"><span class="tag cb">CB</span> store, pixel, ads &nbsp; <span class="tag sis">SISTER</span> product, filming, shipping &nbsp; <span class="tag both">BOTH</span></div>
 </header>
 
-<section class="verdict">
-  <div class="eyebrow">The verdict</div>
-  <h3>Sell the acrylic "Symphony" ambient kit (6-in-1 / 10-in-1 / 18-in-1), app + music sync, shipped from Cleveland in 2–3 days.</h3>
-  <p>It is the one product in the car-lighting category that is <strong>proven on every channel at once</strong> (Amazon, TikTok Shop, Meta DTC stores), still has a <strong>4–6x markup</strong> between factory cost and DTC price, and has an <strong>obvious weak spot in every competitor</strong> (3.8–4.1 star ratings, 12–24% one-star reviews, almost all about install, adhesive and the app). You win by fixing the install experience, not by inventing a product.</p>
-  <div class="kpis">
-    <div class="kpi"><b>$13–27</b><span>factory cost per kit (Alibaba, MOQ 1–20)</span></div>
-    <div class="kpi"><b>$32–62</b><span>Amazon price, 1,280–1,372 units/mo per top listing</span></div>
-    <div class="kpi"><b>$99–150</b><span>what Meta-advertised DTC brands charge</span></div>
-    <div class="kpi"><b>18 mo</b><span>GlowRide has run the same ad since Apr 2025</span></div>
-  </div>
-  <p style="margin:0"><strong>Not</strong> the cheap 4-strip USB puck kits (Govee owns it: 80,197 reviews at $16.99) and <strong>not</strong> the starlight headliner as a first product (3-day install, $340+ price, support nightmare). Starlight is your phase-2 upsell once the brand exists.</p>
-</section>
-
-<h2>1. What changed since you last did this</h2>
-<p>Your old loop (Alibaba/AliExpress → Shopify → supplier ships each order from China) is structurally broken in 2026. Four things changed:</p>
-<ol>
-  <li><strong>The $800 duty-free exemption is gone.</strong> CBP's June 24, 2026 interim final rules suspended de minimis for <em>every country and every shipping mode</em>, including postal mail. Every parcel from China now owes duty (Section 301 25% + the Section 122 surcharge, stacked on the base rate). A single $15 kit mailed to a customer can arrive with a duty bill or get stuck at a postal informal entry. Customers who get a surprise bill charge back.</li>
-  <li><strong>Delivery expectations moved to 5–7 days.</strong> 2–3 week China transit is now the #1 driver of refunds and chargebacks, and Shopify Payments holds funds on new stores for 7–14 days anyway. Speed is the whole game.</li>
-  <li><strong>TikTok Shop became a real channel.</strong> Sellers list once, creators promote for commission (affiliate), and TikTok handles checkout. But it demands dispatch within 2 business days with real tracking, so it only works if the product is already in the US.</li>
-  <li><strong>Meta moved to Advantage+ / Andromeda.</strong> Audience targeting matters less; creative volume and a clean pixel + Conversions API feed matter more. The testing unit is the creative, not the audience.</li>
-</ol>
-<div class="note good"><strong>The 2026 model that fits you:</strong> buy a small batch (20–30 kits, ~$500–800) shipped DDP to Cleveland by air, hold it at home, ship each order via Shopify Shipping (USPS Ground Advantage, ~$7–9). You said you'd fulfill anyway. This is the real advantage: 2–3 day delivery, branded unboxing, zero customs surprises, and TikTok Shop eligibility. CJdropshipping/Zendrop US warehouses are the fallback if you'd rather not touch boxes, but their US stock of this exact SKU is spotty and the margin is ~$10/unit worse.</div>
-
-<h2>2. The research, by channel</h2>
-
-<h3>Amazon (sales estimates, scraped today)</h3>
-<p>The category splits into three tiers. The middle tier is where the money and the gap both are.</p>
-<div class="tablewell"><table>
-<thead><tr><th>Tier</th><th>Example listing</th><th>Price</th><th>Est. units/mo</th><th>Est. rev/mo</th><th>Rating · 1★%</th><th>Read</th></tr></thead>
-<tbody>
-<tr><td>Cheap USB 4-strip</td><td>Govee Car LED Lights (B07Q6CPQK4)</td><td class="num">$16.99</td><td class="num">4,003</td><td class="num">$68,011</td><td class="num">4.4 · 5%</td><td><span class="pill bad">Owned by Govee</span></td></tr>
-<tr><td>Cheap wireless pucks</td><td>TEKSHINNY wireless 4pc (B0BL7JSFHK)</td><td class="num">$12.99</td><td class="num">5,235</td><td class="num">$68,003</td><td class="num">3.9 · 14%</td><td><span class="pill bad">Commodity</span></td></tr>
-<tr><td><strong>Acrylic Symphony</strong></td><td>Jushope 10-in-1 acrylic (B0C73WXQW4)</td><td class="num">$42.99</td><td class="num">1,372</td><td class="num">$58,982</td><td class="num">3.9 · 16%</td><td><span class="pill good">Target</span></td></tr>
-<tr><td><strong>Acrylic Symphony</strong></td><td>MAODANER 6-in-1 acrylic (B0D14BGPXK)</td><td class="num">$41.18</td><td class="num">1,306</td><td class="num">$53,781</td><td class="num">4.0 · 15%</td><td><span class="pill good">Target</span></td></tr>
-<tr><td><strong>Acrylic Symphony</strong></td><td>MAODANER 18-in-1 acrylic (B0D13XTNCD)</td><td class="num">$62.23</td><td class="num">1,306</td><td class="num">$81,272</td><td class="num">3.8 · 19%</td><td><span class="pill good">Target</span></td></tr>
-<tr><td><strong>Acrylic Symphony</strong></td><td>TEKSHINNY 6-in-1 acrylic (B0CN6JL4HD)</td><td class="num">$31.59</td><td class="num">1,280</td><td class="num">$40,435</td><td class="num">4.0 · 12%</td><td><span class="pill good">Target</span></td></tr>
-<tr><td>Starlight headliner</td><td>VASTFIRE 800pc kit (B0F62MTXN3)</td><td class="num">$89.00</td><td class="num">519</td><td class="num">$46,191</td><td class="num">4.5 · 4%</td><td><span class="pill warn">Phase 2</span></td></tr>
-<tr><td>Starlight headliner</td><td>WEBUPAR 200pc kit (B0D5R3Q2G7)</td><td class="num">$52.99</td><td class="num">651</td><td class="num">$34,496</td><td class="num">4.5 · 4%</td><td><span class="pill warn">Phase 2</span></td></tr>
-</tbody></table></div>
-<p>Read the 1-star column. The acrylic kits sell 1,300 units a month each <em>while</em> one in six buyers hates them. Reviews repeat the same four complaints: strips won't stay stuck, trim gaps too tight, the Bluetooth app disconnects, and no per-segment calibration when strips differ in length. Those are fixable with a better kit, a trim tool, an adhesive upgrade and a real install video. Nobody on Amazon can do that; a brand can.</p>
-
-<h3>TikTok Shop (sold counts)</h3>
-<div class="tablewell"><table>
-<thead><tr><th>Listing</th><th>Price</th><th>Sold</th><th>Rating</th><th>Seller</th></tr></thead>
-<tbody>
-<tr><td>DIBMS 43.3" acrylic dash strip, app, dreamcolor chasing</td><td class="num">$15.97</td><td class="num">14,899</td><td class="num">4.2 (1,191)</td><td>US</td></tr>
-<tr><td>YYauto 6-in-1 ambient kit, music sync</td><td class="num">$34.75</td><td class="num">68</td><td class="num">5.0 (5)</td><td>US</td></tr>
-<tr><td>KEZONE 10-in-1 acrylic, app</td><td class="num">$37.94</td><td class="num">42</td><td class="num">5.0 (5)</td><td>US</td></tr>
-<tr><td>CruiseGlow 18-in-1 "Ultra-Chroma"</td><td class="num">$15.50</td><td class="num">37</td><td class="num">4.0 (2)</td><td>US</td></tr>
-</tbody></table></div>
-<p>One acrylic strip listing has moved ~15,000 units on TikTok Shop alone. The full-kit listings are new and thin, which means the shelf is open for a US seller with good video.</p>
-
-<h3>Meta Ad Library (655 active US ads, filtered to the product)</h3>
-<div class="tablewell"><table>
-<thead><tr><th>Advertiser</th><th>Active ads</th><th>Running since</th><th>Sells</th><th>Price</th><th>Signal</th></tr></thead>
-<tbody>
-<tr><td>GlowRide (getglowride.com)</td><td class="num">14</td><td class="num">Apr 2025</td><td>RGBIC acrylic kit, bundles</td><td class="num">$149.99</td><td>1,354 reviews; 18-month ad = profitable</td></tr>
-<tr><td>Top Tier LED / FCK Lightbars</td><td class="num">19</td><td class="num">Apr 2025</td><td>Starlight + shooting-star headliners</td><td class="num">$389+</td><td>Premium brand, 10 long-running ads</td></tr>
-<tr><td>Luxmat (luxmatusa.shop)</td><td class="num">15</td><td class="num">Jan 2026</td><td>Interior kit + footwell upsell</td><td class="num">$99.99</td><td>Shopify, AI product images, 9 months live</td></tr>
-<tr><td>AuraSpec (UK)</td><td class="num">12</td><td class="num">Aug 2026</td><td>Wireless + wired kits</td><td class="num">£24.99–39.99</td><td>12-month warranty angle</td></tr>
-<tr><td>Apxlghts</td><td class="num">7</td><td class="num">Oct 2026</td><td>Wireless kit, BOGO</td><td class="num">n/a</td><td>Brand new entrant</td></tr>
-<tr><td>718 Auto, KBCustomz, Interstellar</td><td class="num">6–9 each</td><td class="num">2026</td><td>Local install shops</td><td class="num">$499–2,600</td><td>Proves the desire; not your competitor</td></tr>
-</tbody></table></div>
-<p>Formats across the whole set: 241 video, 217 image, 138 catalog (DPA). Video is the unit of competition. Three Shopify stores are spending real money month after month on a kit that costs them under $30. That is the proof the ad channel works for this product.</p>
-
-<h3>Alibaba factory cost (ship-to US)</h3>
-<div class="tablewell"><table>
-<thead><tr><th>Kit</th><th>Price ladder</th><th>MOQ</th><th>Dispatch</th><th>Store rating</th></tr></thead>
-<tbody>
-<tr><td>6-in-1 64-color Symphony acrylic</td><td class="num">$13 (20+) · $12 (100+) · $10.80 (500+)</td><td class="num">20 sets</td><td class="num">25 d</td><td class="num">—</td></tr>
-<tr><td>Symphony 6/10/14/18-in-1 (10-yr supplier)</td><td class="num">$15.30–22.90</td><td class="num">1 box</td><td class="num">7 d</td><td class="num">—</td></tr>
-<tr><td>18-in-1 Symphony, 2026 version (12-yr supplier)</td><td class="num">$18 (20+) · $15 (100+) · $13.50 (500+)</td><td class="num">20 sets</td><td class="num">7 d</td><td class="num">3.8</td></tr>
-<tr><td>22-in-1 Symphony acrylic</td><td class="num">$29 (2+) · $25 (50+) · $20 (200+)</td><td class="num">2 sets</td><td class="num">5 d</td><td class="num">4.3</td></tr>
-<tr><td>18-in-1 hidden acrylic, cross-border (sample ok)</td><td class="num">$18.50–32.50</td><td class="num">2 sets</td><td class="num">7 d</td><td class="num">—</td></tr>
-<tr><td>Factory 18-in-1, samples available</td><td class="num">$27 (10+) · $23 (100+) · $20 (500+)</td><td class="num">10 sets</td><td class="num">10 d</td><td class="num">—</td></tr>
-</tbody></table></div>
-<p>Plan on <strong>$18–25 per 18-in-1 kit</strong> FOB, plus roughly 30–40% for duty and air freight on a small DDP order, so <strong>~$25–33 landed</strong>. Ask every supplier for DDP (duties paid) pricing to Cleveland so the number is final.</p>
-
-<h3>Reddit (what owners actually say)</h3>
-<ul>
-  <li>Install posts get 76–418 upvotes in car subs. People want this and want to show it off. "$40 acrylic light strip kit from Amazon… pretty happy" (87 upvotes). "Installed a dreamcolor acrylic ambient lighting kit, was very much needed" (76).</li>
-  <li>Acrylic beats fiber-optic: "I tried one of those fibre optic style strips but the brightness varied along the strip. This [acrylic] one is thin enough to slot between the trim and produces a consistent line."</li>
-  <li>The purchase path today is Amazon or AliExpress links, named by model (MAODANER, Symphony 18-in-1). No brand owns the conversation. A brand with install videos per car model would.</li>
-  <li>Complaints are about glare on the windshield, adhesive in heat, and cheap single-color strips. Your content should answer all three before the objection forms.</li>
-</ul>
-
-<h2>3. The offer</h2>
-<div class="two">
-<div>
-<h3>Pricing ladder</h3>
-<div class="tablewell"><table style="min-width:0">
-<thead><tr><th>Kit</th><th>Price</th><th>Landed cost</th></tr></thead>
-<tbody>
-<tr><td>Dash Only (2-in-1 acrylic)</td><td class="num">$44</td><td class="num">~$12</td></tr>
-<tr><td>Core (6-in-1)</td><td class="num">$79</td><td class="num">~$19</td></tr>
-<tr><td><strong>Full Cabin (18-in-1)</strong> ← hero</td><td class="num">$119</td><td class="num">~$30</td></tr>
-<tr><td>Add-on: footwell pack / trim tool + VHB pads</td><td class="num">$19 / $12</td><td class="num">~$4 / $2</td></tr>
-</tbody></table></div>
-<p style="font-size:.9rem">Anchor to GlowRide's $149.99 and Luxmat's $99.99. You are cheaper than the brands, 2x Amazon, and the gap is justified by install support, 2–3 day shipping from Ohio and a 30-day guarantee.</p>
+<div class="box">
+  <h3>What we're selling</h3>
+  <p style="margin-bottom:.5rem">An <strong>acrylic ambient lighting kit</strong> for car interiors (the thin light strip that tucks into the dash and door gaps, app + music sync). Sell at <strong>$119</strong> for the 18-piece kit, <strong>$79</strong> for 6-piece. It costs <strong>$15–27</strong> from the factory. We keep 30 in Cleveland and ship in 2 days.</p>
+  <p class="note" style="margin:0">Why this one: top Amazon listings sell ~1,300/month each at $32–62 with lots of angry reviews about install (we fix that); one TikTok Shop listing has 14,899 sold; GlowRide sells the same thing at $149.99 and has run the same Meta ad since April 2025.</p>
 </div>
-<div>
-<h3>Unit economics (hero kit)</h3>
-<div class="math">Price                 $119.00
-Kit, landed (DDP)      -30.00
-USPS Ground Adv.        -8.50
-Box + insert            -1.50
-Shopify 2.9%+30¢        -3.75
-Gross per order        $75.25
 
-Break-even CPA          $75
-Target CPA            $35–45
-= ROAS 2.6–3.4 to be
-  comfortably profitable</div>
-</div>
-</div>
-<h3>What makes you different (pick all four, they're cheap)</h3>
+<h2>Order these today</h2>
+<ul class="check">
+  <li><a href="https://www.amazon.com/dp/B0D14BGPXK">MAODANER 6-in-1 acrylic kit on Amazon (~$41)</a> — arrives in 2 days so filming starts now. <span class="tag sis">SISTER</span></li>
+  <li>Message these 3 Alibaba factories for 2 samples each + a quote for 30 units, DDP to Cleveland: <a href="https://www.alibaba.com/product-detail/2026-Interior-Car-Accessories-Symphony-Ambient_1601219922290.html">18-in-1 Symphony, $18/unit at 20+ (12-yr supplier)</a> · <a href="https://www.alibaba.com/product-detail/22-in-1-Symphony-Ambient-Light_1600789291035.html">22-in-1 Symphony, $29 at 2+, $25 at 50+</a> · <a href="https://www.alibaba.com/product-detail/Factory-Wholesale-18-in-1-Symphony_11000019694675.html">Factory 18-in-1 with samples, $27 at 10+</a> <span class="tag sis">SISTER</span></li>
+  <li><a href="https://www.amazon.com/s?k=trim+removal+tool+kit+plastic">Plastic trim tool set</a> and <a href="https://www.amazon.com/s?k=3M+VHB+double+sided+tape+pads">3M VHB adhesive pads</a> — these go in every box we ship. <span class="tag sis">SISTER</span></li>
+</ul>
+
+<h2>The steps</h2>
+
+<details class="step"><summary><span class="n">1</span><span class="t">Pick a name, buy the domain<small>This week · 1 hour</small></span><span class="who">both</span></summary><div class="body">
+<ul class="check">
+  <li>Pick a brand name. Don't use "Glow" (GlowRide, CruiseGlow, RideGlow already exist). Say it out loud like a TikTok caption.</li>
+  <li>Buy the .com at <a href="https://porkbun.com">Porkbun</a> or <a href="https://www.namecheap.com">Namecheap</a> (~$10).</li>
+  <li>Grab the same handle on TikTok and Instagram in the same sitting.</li>
+  <li>Whoever is 18+ with a US bank account owns every account (Shopify, Meta, TikTok Shop require it).</li>
+</ul></div></details>
+
+<details class="step"><summary><span class="n">2</span><span class="t">Open the Shopify store<small>Week 1 · 1 afternoon</small></span><span class="who">CB</span></summary><div class="body">
+<ul class="check">
+  <li>Sign up: <a href="https://www.shopify.com/free-trial">shopify.com/free-trial</a> (3 days free, then $1/month for 3 months, then Basic $39/mo).</li>
+  <li>Follow Shopify's own checklist: <a href="https://help.shopify.com/manual/intro-to-shopify/initial-setup">Getting set up to start selling</a>.</li>
+  <li>Turn on Shopify Payments. The legal name on Shopify must match the bank account name or payouts get held.</li>
+  <li>Turn on sales tax for Ohio: <a href="https://help.shopify.com/en/manual/taxes/us/basic-tax">Shopify Help: Setting up US taxes</a>.</li>
+  <li>Build one product page with 3 variants ($44 dash-only / $79 6-piece / $119 18-piece) and two add-ons ($19 footwell pack, $12 trim tool + VHB). Pages: Shipping, Returns, Contact. Nothing else.</li>
+</ul></div></details>
+
+<details class="step"><summary><span class="n">3</span><span class="t">Film the first kit<small>Week 1 · 1 afternoon, 1 car, your phone</small></span><span class="who">sister</span></summary><div class="body">
+<p>Install the Amazon kit and film everything vertical in 4K. You need 15–20 clips. Each ad later is 15–30 seconds.</p>
+<ul class="check">
+  <li>Dark cabin at dusk → lights-on reveal, same angle.</li>
+  <li>Hands tucking the strip into the dash gap with the trim tool, close up.</li>
+  <li>Phone screen: picking a colour, brightness, music mode reacting to a song.</li>
+  <li>Passenger-seat view driving at night.</li>
+  <li>Unboxing: box, strip, controller, trim tool, VHB pads.</li>
+  <li>30 seconds of you talking: "what I'd tell you before you buy one of these."</li>
+  <li>Film the windshield at night to show there's no glare at medium brightness (it's the #1 Reddit objection).</li>
+</ul>
+<p>How to install it: <a href="https://www.youtube.com/results?search_query=acrylic+ambient+light+car+install+dash+trim+gap">YouTube: acrylic ambient light install tutorials</a> (watch 2–3 before you start; brands differ slightly).</p>
+</div></details>
+
+<details class="step"><summary><span class="n">4</span><span class="t">Connect Meta and TikTok to the store<small>Week 1–2 · 2 hours</small></span><span class="who">CB</span></summary><div class="body">
+<ul class="check">
+  <li>Create a Meta Business Portfolio: <a href="https://business.facebook.com/overview">business.facebook.com</a>. Turn on 2FA. Create the Page, ad account and pixel/dataset <em>inside it</em>. Add a payment method.</li>
+  <li>Install the <a href="https://apps.shopify.com/facebook">Facebook & Instagram app in Shopify</a>. In its settings set Data Sharing to <strong>Maximum</strong>; that turns on the Conversions API.</li>
+  <li>Check events are flowing: <a href="https://business.facebook.com/events_manager2">Meta Events Manager</a> → your pixel → Test events. Purchase should show "Good" match quality within 48 hours.</li>
+  <li>Verify the domain: <a href="https://business.facebook.com/settings/owned-domains">Business Settings → Brand Safety → Domains</a> → add the TXT record at Porkbun/Namecheap.</li>
+  <li>TikTok Shop seller account: <a href="https://seller-us.tiktok.com">seller-us.tiktok.com</a> (18+, last 4 of SSN or an EIN, US bank). Approval 24–48 h.</li>
+  <li>Install the <a href="https://apps.shopify.com/tiktok">TikTok app in Shopify</a> so products sync and the TikTok pixel installs.</li>
+</ul></div></details>
+
+<details class="step"><summary><span class="n">5</span><span class="t">Give CB the ad accounts<small>Week 2 · 20 minutes</small></span><span class="who">sister</span></summary><div class="body">
+<p>Partner access, not a shared password. It keeps billing on your card and survives 2FA.</p>
+<ul class="check">
+  <li>Go to <a href="https://business.facebook.com/settings/partners">Business Settings → Partners</a> → <strong>Add</strong> → "Give a partner access to your assets" → enter Twenty47's Business ID (CB sends it).</li>
+  <li>Tick: Ad account → <strong>Manage campaigns</strong>. Page → <strong>Create content + Advertise</strong>. Pixel/dataset → <strong>Manage</strong>. Catalog → Manage. Instagram → Content + Ads. Do <em>not</em> give Admin on the business.</li>
+  <li>TikTok: <a href="https://business.tiktok.com">TikTok Business Center</a> → Members → invite CB as Admin on the Ads account. In TikTok Shop Seller Center → Settings → add CB as a sub-account with Marketing permission.</li>
+  <li>Shopify → Settings → Users → add CB with Orders, Products, Analytics, Apps (not Billing).</li>
+</ul></div></details>
+
+<details class="step"><summary><span class="n">6</span><span class="t">Pick the supplier, order 30 units<small>Week 2–3 · when samples land</small></span><span class="who">both</span></summary><div class="body">
+<ul class="check">
+  <li>Test every sample on 2 cars: does the adhesive hold after a hot day, does the app pair first try, is the strip evenly bright, does it fit a real trim gap.</li>
+  <li>Ask each factory which app the controller uses. Prefer Tuya / Smart Life based apps (they won't vanish). Avoid a one-off app.</li>
+  <li>Order 30 of the winner, <strong>DDP by air</strong> (duties paid, ~$600–900 all-in, 7–15 days). Ask for your logo on the box insert. Pay through Alibaba Trade Assurance only.</li>
+  <li>Buy shipping supplies: <a href="https://www.amazon.com/s?k=6x4x3+shipping+boxes+25+pack">6x4x3 mailer boxes</a> (check your kit's box size first) and a <a href="https://www.amazon.com/s?k=thermal+shipping+label+printer+4x6">4x6 thermal label printer</a> (~$100–150).</li>
+  <li>Set up shipping in Shopify: <a href="https://help.shopify.com/manual/shipping/shopify-shipping/shipping-carriers/usps">Shopify Shipping with USPS</a> → use Ground Advantage (2–5 days, ~$7–9). Set handling time to 1 day.</li>
+</ul></div></details>
+
+<details class="step"><summary><span class="n">7</span><span class="t">Launch ads the day the boxes arrive<small>Week 3 · $40–50/day</small></span><span class="who">CB</span></summary><div class="body">
+<p>CB runs this. Here is what will happen so nobody panics.</p>
+<ul class="check">
+  <li>Cut 6–8 ads from the footage, each with a different first 3 seconds. Hooks that work in this niche: "If your car is pitch black inside at night, this took me 20 minutes." · "I almost paid a shop $500 for this." · "Why every Amazon ambient kit falls off in summer, and the $2 fix." · "Ships from Ohio, at your door in 2 days."</li>
+  <li>One Meta <strong>Advantage+ Sales</strong> campaign, US, $40–50/day, all ads in it. One small Test ad set at $20/day for new hooks each week.</li>
+  <li>Post 3–5 TikToks and Reels a week from the same footage. <span class="tag sis">SISTER</span></li>
+  <li>List the kit on TikTok Shop and open an affiliate plan at 15–20% commission so creators sell it for you: TikTok Shop Seller Center → Affiliate → Open Plan. <a href="https://nonsensical.agency/guides/tiktok-shop-how-to-make-the-most-of-your-affiliate-open-plan">How the Open Plan works</a>.</li>
+  <li>Ship every order same or next day. Shopify sends tracking automatically; add the install video link to the shipping email. <span class="tag sis">SISTER</span></li>
+</ul>
+<div class="money">Per $119 order:
+kit (landed)   -$30   shipping -$8.50   box -$1.50   Shopify fee -$3.75
+= about $75 profit before ads
+Break-even: one sale per $75 of ads.  Target: one sale per $35–45.</div>
+</div></details>
+
+<details class="step"><summary><span class="n">8</span><span class="t">Wait 7 days before judging anything<small>Week 3–6 · the part everyone gets wrong</small></span><span class="who">CB</span></summary><div class="body">
+<ul class="check">
+  <li>Each ad gets <strong>7 days and ~$70</strong> before it's killed. Not 3 days.</li>
+  <li>Kill: no add-to-carts after $40 spent, or over $75 per sale after 7 days. Keep: under $45 per sale on 3+ sales.</li>
+  <li>Every week, reshoot 2–3 new openings for the winning ad. Same body, new first 3 seconds. <span class="tag sis">SISTER</span></li>
+  <li>Reorder 50–100 units the day you hit 10 left (price drops to ~$15/unit at 100). <span class="tag sis">SISTER</span></li>
+  <li>Offer every buyer the $19 footwell pack free for a 30-second video review. Their footage is next month's ads.</li>
+</ul>
+<p><strong>What to expect:</strong> first real signal (clicks, add-to-carts) by day 3–5. First orders in week 1–2 of ads, probably at a loss. A repeatable ad under $45 per sale by week 4–6 of ads. Consistently profitable days around week 8–10 from today. Budget to get there: <strong>$1,500–2,500 in ads + $700–900 inventory + ~$250 setup</strong>. If you can't fund 6 weeks of ads without stopping early, wait until you can.</p>
+</div></details>
+
+<details class="step"><summary><span class="n">9</span><span class="t">Scale what works<small>Week 6+ </small></span><span class="who">CB</span></summary><div class="body">
+<ul class="check">
+  <li>Raise the winning campaign's budget 20% every 3 days while cost per sale holds. Never double overnight.</li>
+  <li>Split spend 60% proven ads / 30% variations / 10% brand-new ideas.</li>
+  <li>Add the starlight headliner kit as an email upsell to past buyers only (don't run it to cold traffic; 3-day install = returns).</li>
+  <li>Make car-specific pages (Tesla Model 3/Y, Camry, Civic, F-150) each with its own install video.</li>
+</ul></div></details>
+
+<h2>Don't do these</h2>
 <ul>
-  <li><strong>Install videos per car type</strong> (sedan, SUV, truck, Tesla). Film them yourselves on your own cars and friends' cars. This is the content engine and the support desk in one.</li>
-  <li><strong>"Stays stuck" kit:</strong> include a plastic trim tool, alcohol wipes and 3M VHB pads. Costs ~$2, kills the #1 one-star reason.</li>
-  <li><strong>Ships from Ohio, 2–3 days.</strong> Say it on every ad and page. It is the single biggest difference from Amazon's Chinese sellers and from any China-direct dropshipper.</li>
-  <li><strong>30-day fit guarantee.</strong> Doesn't fit your trim gap, send it back. Real returns on this product run low when the install video is good.</li>
-</ul>
-<div class="note warn"><strong>Brand name:</strong> stay away from "Glow" anything (GlowRide, CruiseGlow, RideGlow already exist). Pick something you can trademark and say out loud in a TikTok. Check the .com and the TikTok handle in the same sitting.</div>
-
-<h2>4. The 8-week plan</h2>
-<p>Assumes you both start this week. CB owns tech, store and ad account; sister owns product, filming and fulfillment. Everything is checkboxes so you can work from this page.</p>
-
-<div class="week"><div class="n">00<small>this week</small></div><div>
-<h3>Decide and order</h3>
-<ul class="check">
-  <li>Order 1 acrylic kit on Amazon today (MAODANER 6-in-1 or Jushope 10-in-1) so filming starts in 2 days, not 2 weeks. <span class="who">sister</span></li>
-  <li>Message 3 Alibaba suppliers from the table above. Ask: DDP price to Cleveland 44xxx for 2 samples now and 30 units later, lead time, whether they can add your logo on the controller and box at 30 units, and whether their app is their own or a white-label one (ask the app's name). Order 2 samples each from the best 2. <span class="who">sister</span></li>
-  <li>Pick the brand name, buy the .com, grab TikTok + IG handles. <span class="who">both</span></li>
-  <li>Open Shopify (3-day trial, then $1/mo for 3 months, then Basic $39). Use Shopify Payments; make sure the legal name matches the bank account or payouts get held. <span class="who">CB</span></li>
-  <li>Sole prop with EIN is enough to start; form the LLC once you have 30 days of sales. Whoever is 18+ with a US bank account owns the Shopify, Meta and TikTok Shop accounts (TikTok Shop requires 18+). <span class="who">CB</span></li>
-</ul></div></div>
-
-<div class="week"><div class="n">01<small>wk 1–2</small></div><div>
-<h3>Film while you wait</h3>
-<ul class="check">
-  <li>Install the Amazon kit on one car. Film everything on a phone: unboxing, trim-tool install, the "lights on" reveal at dusk, the app, music sync, a driving POV at night. Shoot vertical, 4K, clean audio. <span class="who">sister</span></li>
-  <li>Get 15–20 raw clips. You need 6–8 finished ads in week 3, each 15–30 seconds, each with a different first 3 seconds. <span class="who">sister</span></li>
-  <li>Build the store: one hero product page with the 3 kit variants, add-ons, a 60-second install video, before/after gallery, FAQ (fits my car? glare? adhesive? shipping?), reviews section, guarantee. Pages: shipping, returns, contact. No menu bloat. <span class="who">CB</span></li>
-  <li>Install the Meta Sales Channel app and the TikTok app in Shopify. Create Meta Business Manager, Page, pixel, dataset; turn on Conversions API via the Shopify app; verify the domain. Create TikTok Shop seller account and TikTok Ads account. <span class="who">CB</span></li>
-  <li>Set up Shopify Shipping with USPS Ground Advantage, 2-day handling. Buy 30 mailer boxes (6x4x3 or whatever the kit needs) and a thermal label printer (~$120). <span class="who">sister</span></li>
-</ul></div></div>
-
-<div class="week"><div class="n">02<small>wk 2–3</small></div><div>
-<h3>Samples arrive, decide the supplier, place the batch</h3>
-<ul class="check">
-  <li>Test all samples on 2 different cars: adhesive after a hot day, app pairing, brightness consistency, strip length vs real trim gaps. Pick the one with the best app and brightest, most even acrylic. <span class="who">sister</span></li>
-  <li>Order 30 units DDP by air (~$600–900 all-in). Ask for your logo on the box insert at minimum. Lead time 7–15 days. <span class="who">both</span></li>
-  <li>Re-shoot the hero content with the real kit and box. Cut the 6–8 ad variants. Write primary text and headlines (CB's ads agents do this). <span class="who">both</span></li>
-  <li>List the product on TikTok Shop too, open an affiliate plan at 15–20% commission, and target 20 small car creators through the Affiliate Center. Free distribution while ads warm up. <span class="who">CB</span></li>
-</ul></div></div>
-
-<div class="week"><div class="n">03<small>wk 3–4</small></div><div>
-<h3>Launch ads (testing phase)</h3>
-<ul class="check">
-  <li>Day 1 of inventory in hand = day 1 of ads, not before. <span class="who">CB</span></li>
-  <li>One Advantage+ Sales campaign, broad US 18–45, $40–50/day, 6–8 creatives in. One separate Test ad set at $20/day for new hooks each week. Judge the <em>winning ad's</em> spend, not the campaign average. <span class="who">CB</span></li>
-  <li>TikTok Ads: $20/day Spark Ads on the best organic post once one gets traction. <span class="who">CB</span></li>
-  <li>Post 3–5 organic TikToks and Reels a week from the same footage. Organic retargets ad viewers for free and drops CPMs. <span class="who">sister</span></li>
-  <li>Ship every order same or next day. Send a tracking SMS/email with the install video link. <span class="who">sister</span></li>
-</ul></div></div>
-
-<div class="week"><div class="n">04<small>wk 4–6</small></div><div>
-<h3>Read, kill, double down</h3>
-<ul class="check">
-  <li>Give each creative 7 days and ~$70 before killing. Kill rule: no add-to-carts after $40, or CPA over $75 after 7 days. Keep rule: CPA under $45 on 3+ purchases. <span class="who">CB</span></li>
-  <li>Ship 2–3 new hook variations of the winner each week (same body, new first 3 seconds). <span class="who">sister</span></li>
-  <li>Reorder 50–100 units at the lower ladder price the day you have 10 units left. <span class="who">sister</span></li>
-  <li>Ask every buyer for a video review in exchange for the $19 footwell add-on. Buyer footage is next month's ads. <span class="who">sister</span></li>
-</ul></div></div>
-
-<div class="week"><div class="n">06<small>wk 6–8</small></div><div>
-<h3>Scale what works</h3>
-<ul class="check">
-  <li>Raise budget 20% every 3 days on the winning campaign while CPA holds. Never double overnight. <span class="who">CB</span></li>
-  <li>Add a Winners campaign (proven creatives only) at 60% of spend; 30% to variations; 10% to fresh concepts. <span class="who">CB</span></li>
-  <li>Add the starlight headliner as a post-purchase upsell email and a retargeting-only product. Don't run it cold. <span class="who">CB</span></li>
-  <li>Open vehicle-specific pages (Tesla Model 3/Y, Camry, Civic, F-150) with their own install video. Search traffic and lower CPA. <span class="who">both</span></li>
-</ul></div></div>
-
-<h2>5. Timeline to traction, honestly</h2>
-<div class="kpis">
-  <div class="kpi"><b>Day 3–5</b><span>of ads: first real signal (CTR above 1.5%, add-to-carts). Not sales yet.</span></div>
-  <div class="kpi"><b>Week 1–2</b><span>of ads: first orders. Expect to lose money. This is tuition.</span></div>
-  <div class="kpi"><b>Week 4–6</b><span>of ads: a repeatable creative with CPA under $45. This is "traction".</span></div>
-  <div class="kpi"><b>~Week 8–10</b><span>from today: consistently profitable days if the product and creative are right.</span></div>
-</div>
-<p>Budget for the first 60 days: <strong>$1,500–2,500 in ads</strong>, <strong>$700–900 inventory</strong>, <strong>~$250 store, apps, boxes, printer</strong>. Roughly $2,500–3,600 to find out properly. If you can't fund the ad testing through week 6 without panicking, wait until you can; the most common way this fails is killing ads on day 3.</p>
-
-<h2>6. Creative brief: what the winning ads say</h2>
-<p>Every long-running competitor ad uses the same five beats. Copy the beats, not the words.</p>
-<div class="hook">"Instantly transform your car's interior ✨ Smooth ambient lights with a premium glow 📱 Choose any color or brightness via app ⚡ Easy plug-and-play install - no tools"<span class="src">GlowRide — same ad body running since Apr 2025 with rotating UGC clips</span></div>
-<div class="hook">"15–20 min self install - Fits all cars. Adjust colors, modes & brightness. Plug & play — no tools."<span class="src">Luxmat — install-time objection handled in the first line</span></div>
-<div class="hook">"This isn't just ambient lighting. It's the easiest way to give your car a premium interior upgrade in minutes. No wiring, no tools, no expensive modifications."<span class="src">AuraSpec — "no $500 install shop" contrast</span></div>
-<div class="hook">"Cheap starlight installs sag, gap, and droop within months. Ours don't."<span class="src">Interstellar Interiors — the quality-vs-cheap angle you should borrow for adhesive</span></div>
-<h3>Your hooks (Wehner's conditions + beliefs framing, from CB's ads brain)</h3>
-<p>Lead with the situation the buyer is already in, not the label "car owners". In-market people are already googling "ambient lighting kit"; needs-convincing people have a dark cabin and don't know this exists for under $500.</p>
-<ul>
-  <li>"If your car's interior is pitch black at night, this took me 20 minutes." (needs-convincing, situational)</li>
-  <li>"I almost paid a shop $500 for ambient lighting. Then I did this in my driveway." (price-anchor contrast)</li>
-  <li>"Why every Amazon ambient kit falls off in summer, and the $2 fix." (one-star reviews become your ad)</li>
-  <li>"Ships from Ohio. At your door in 2 days. No waiting 3 weeks for China." (the structural advantage, said plainly)</li>
-  <li>POV night drive with music sync, no voiceover, caption only. (pure visual; this is the TikTok Shop winner format)</li>
-</ul>
-<h3>Shot list (one afternoon, one car, phone only)</h3>
-<ul>
-  <li>Dark cabin "before" at dusk → the reveal (same angle, 3 seconds each).</li>
-  <li>Hands tucking the acrylic strip into the dash gap with the trim tool, close up.</li>
-  <li>Phone screen: color picker, brightness, music mode responding to a beat.</li>
-  <li>Passenger-seat POV driving at night, city lights outside, cabin glowing.</li>
-  <li>Unboxing: box, insert, trim tool, VHB pads, QR to install video.</li>
-  <li>30 seconds of sister talking to camera: "what I'd tell you before you buy one of these."</li>
+  <li>Don't ship from China per order. The $800 duty-free rule ended for everything in June 2026 (<a href="https://www.federalregister.gov/documents/2026/06/24/2026-12669/indefinite-suspension-of-the-de-minimis-exemption-for-mail-shipments-and-new-postal-informal-entry">Federal Register notice</a>). Customers get duty bills, wait 3 weeks, and charge back.</li>
+  <li>Don't say "fits every car". Say "fits most cars with a 1–3 mm dash or door trim gap" and show the gap test.</li>
+  <li>Don't kill an ad on day 3.</li>
+  <li>Don't run out of stock in a winning week.</li>
+  <li>Don't sell the cheap USB 4-strip kits. <a href="https://www.amazon.com/dp/B07Q6CPQK4">Govee owns that</a> (80,000 reviews at $16.99).</li>
 </ul>
 
-<h2>7. Handing CB the ad account</h2>
-<p>Do it as a partner grant, not a shared password. It survives 2FA, keeps billing on your card, and CB's Meta Ads tools plug straight in.</p>
-<ol>
-  <li>Create your own <strong>Meta Business Portfolio</strong> (business.facebook.com) under the owner's personal profile with 2FA on. Create the Page, the ad account and the pixel/dataset <em>inside it</em>. Add a payment method and set a spending limit.</li>
-  <li>Business Settings → Users → <strong>Partners → Add → "Give a partner access to your assets"</strong>. Enter Twenty47 Marketing's Business ID. Assign: Ad account (Manage campaigns / Advertiser), Page (Advertise + Create content), Pixel (Manage), Catalog (Manage), Instagram account (Content + Ads). Do not grant Admin on the business.</li>
-  <li>In Shopify, the Meta Sales Channel app connects to that same Business Portfolio and turns on Conversions API. Confirm Events Manager shows Purchase events with "Good" match quality within 48 hours.</li>
-  <li>Verify the domain in Brand Safety → Domains (add the TXT record at the registrar).</li>
-  <li>TikTok: Business Center → Members → invite CB's email as Admin on the Ads account; in TikTok Shop, add CB as a sub-account with Marketing permission.</li>
-  <li>Give CB a Shopify staff account (Orders, Products, Analytics, Apps; not Billing).</li>
-</ol>
-<div class="note"><strong>What CB then runs:</strong> campaign structure (Advantage+ Sales + a Test ad set), budget pacing, the 7-day kill/keep rules above, weekly creative requests back to you with exactly which hook to reshoot, and a Sunday numbers note: spend, orders, CPA, ROAS, what's next. You create the ads and ship the boxes. Nothing else.</div>
-
-<h2>8. Things that quietly kill new stores</h2>
-<ul>
-  <li><strong>Shipping late.</strong> TikTok Shop throttles you above a 2-day dispatch. Shopify Payments holds funds when disputes pass ~1%. Ship same day. Always real tracking.</li>
-  <li><strong>Overpromising "fits every car".</strong> Say "fits most cars with a dash or door trim gap of 1–3mm" and show the gap test in the video. Honest fit claims cut returns in half.</li>
-  <li><strong>Brightness glare.</strong> Reddit's one real objection. Film the windshield at night to show there's none at medium brightness.</li>
-  <li><strong>Running out of stock during a winning week.</strong> Reorder at 10 units left, every time.</li>
-  <li><strong>Judging ads at day 3.</strong> Seven days, $70, then decide.</li>
-  <li><strong>Sales tax.</strong> Turn on Shopify Tax; you have Ohio nexus from day one. It handles the rest until you cross other states' thresholds.</li>
-  <li><strong>Supplier's white-label app disappearing.</strong> Ask which app the controller uses; prefer suppliers on a widely used one (Tuya/Smart Life based), not a one-off.</li>
+<h2>Every link in one place</h2>
+<ul class="links">
+  <li><strong>Products to study / buy:</strong> <a href="https://www.amazon.com/dp/B0D14BGPXK">MAODANER 6-in-1 ($41, ~1,300/mo)</a> · <a href="https://www.amazon.com/dp/B0C73WXQW4">Jushope 10-in-1 ($43, ~1,370/mo)</a> · <a href="https://www.amazon.com/dp/B0D13XTNCD">MAODANER 18-in-1 ($62)</a> · <a href="https://www.amazon.com/dp/B0CN6JL4HD">TEKSHINNY 6-in-1 ($32)</a> · <a href="https://shop.tiktok.com/us/pdp/rgb-car-interior-light-strip-43-3-inch-acrylic-kit-dreamcolor-chasing-dashboard-control-universal-fi/1731045370743460273">DIBMS strip on TikTok Shop (14,899 sold)</a></li>
+  <li><strong>Factories (Alibaba):</strong> <a href="https://www.alibaba.com/product-detail/2026-Interior-Car-Accessories-Symphony-Ambient_1601219922290.html">18-in-1 Symphony $18 @20</a> · <a href="https://www.alibaba.com/product-detail/22-in-1-Symphony-Ambient-Light_1600789291035.html">22-in-1 $29 @2</a> · <a href="https://www.alibaba.com/product-detail/Factory-Wholesale-18-in-1-Symphony_11000019694675.html">Factory 18-in-1 $27 @10 (samples)</a> · <a href="https://www.alibaba.com/product-detail/6-in-1-64-Color-RGB_1601627079853.html">6-in-1 $13 @20</a> · <a href="https://www.alibaba.com/product-detail/18in1-Cross-Border-Hidden-Acrylic-LED_1601464829453.html">18-in-1 hidden acrylic (samples ok)</a></li>
+  <li><strong>Competitors to copy:</strong> <a href="https://getglowride.com">GlowRide</a> · <a href="https://luxmatusa.shop">Luxmat</a> · <a href="https://auraspec.co">AuraSpec</a> · <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&q=car%20ambient%20lighting">Meta Ad Library: car ambient lighting</a></li>
+  <li><strong>Shopify:</strong> <a href="https://www.shopify.com/free-trial">Sign up</a> · <a href="https://help.shopify.com/manual/intro-to-shopify/initial-setup">Setup checklist</a> · <a href="https://help.shopify.com/en/manual/taxes/us/basic-tax">US sales tax</a> · <a href="https://help.shopify.com/manual/shipping/shopify-shipping/shipping-carriers/usps">Shipping with USPS</a> · <a href="https://apps.shopify.com/facebook">Facebook & Instagram app</a> · <a href="https://apps.shopify.com/tiktok">TikTok app</a> · <a href="https://www.shopify.com/pricing">Pricing</a></li>
+  <li><strong>Meta:</strong> <a href="https://business.facebook.com/overview">Business Portfolio</a> · <a href="https://business.facebook.com/settings/partners">Partners (give CB access)</a> · <a href="https://business.facebook.com/settings/owned-domains">Domain verification</a> · <a href="https://business.facebook.com/events_manager2">Events Manager</a> · <a href="https://adsmanager.facebook.com">Ads Manager</a></li>
+  <li><strong>TikTok:</strong> <a href="https://seller-us.tiktok.com">Shop Seller Center (US)</a> · <a href="https://business.tiktok.com">Business Center</a> · <a href="https://ads.tiktok.com">Ads Manager</a> · <a href="https://nonsensical.agency/guides/tiktok-shop-how-to-make-the-most-of-your-affiliate-open-plan">Affiliate Open Plan guide</a></li>
+  <li><strong>Supplies:</strong> <a href="https://www.amazon.com/s?k=trim+removal+tool+kit+plastic">trim tools</a> · <a href="https://www.amazon.com/s?k=3M+VHB+double+sided+tape+pads">3M VHB pads</a> · <a href="https://www.amazon.com/s?k=6x4x3+shipping+boxes+25+pack">mailer boxes</a> · <a href="https://www.amazon.com/s?k=thermal+shipping+label+printer+4x6">label printer</a> · <a href="https://porkbun.com">domain</a></li>
+  <li><strong>Learn:</strong> <a href="https://www.youtube.com/results?search_query=acrylic+ambient+light+car+install+dash+trim+gap">install tutorials (YouTube)</a> · <a href="https://affectgroup.com/blog/how-to-test-creatives-in-meta-ads-in-2026-a-working-system-in-the-era-of-advantage-and-andromeda/">how Meta creative testing works in 2026</a> · <a href="https://www.salehoo.com/learn/tiktok-dropshipping">TikTok Shop rules for sellers</a></li>
 </ul>
-
-<h2>Sources</h2>
-<ul class="sources">
-  <li>Live scrapes 21 Oct 2026 via Apify: Amazon (automly/amazon-products-scraper, 100 listings), Meta Ad Library (automation-lab/facebook-ads-library, 655 US active ads), TikTok Shop (bovi/tiktok-shop-scraper), Alibaba (zen-studio/alibaba-scraper, 89 listings, ship-to US), Reddit (harshmaur/reddit-scraper, 200 items)</li>
-  <li><a href="https://www.federalregister.gov/documents/2026/06/24/2026-12669/indefinite-suspension-of-the-de-minimis-exemption-for-mail-shipments-and-new-postal-informal-entry">Federal Register: Indefinite Suspension of the De Minimis Exemption for Mail Shipments (June 24, 2026)</a></li>
-  <li><a href="https://www.thompsonhinesmartrade.com/2026/06/cbp-issues-interim-final-rules-indefinitely-suspending-the-de-minimis-exemption-for-imports/">Thompson Hine: CBP Interim Final Rules suspending de minimis</a> · <a href="https://www.troutman.com/insights/no-more-free-ride-navigating-cbps-new-international-mail-entry-process/">Troutman Pepper: new international mail entry process</a></li>
-  <li><a href="https://www.asinsight.com/report/US/ambient-lighting-car-interior">ASInsight: ambient lighting car interior, top 10 by sales (July 2026)</a></li>
-  <li><a href="https://www.shopify.com/pricing">Shopify pricing</a> · <a href="https://www.salehoo.com/learn/tiktok-dropshipping">SaleHoo: TikTok dropshipping compliance 2026</a> · <a href="https://canopymanagement.com/tiktok-shop-eligibility-what-you-need-to-get-started/">TikTok Shop eligibility 2026</a></li>
-  <li><a href="https://getglowride.com">GlowRide</a> · <a href="https://luxmatusa.shop">Luxmat</a> · <a href="https://auraspec.co">AuraSpec</a> · <a href="https://nightglowe.com/blogs/news/car-ambient-lighting-worth-it-review">Nightglowe (premium comp, install-time claims)</a></li>
-  <li><a href="https://affectgroup.com/blog/how-to-test-creatives-in-meta-ads-in-2026-a-working-system-in-the-era-of-advantage-and-andromeda/">Creative testing under Advantage+/Andromeda (2026)</a> · <a href="https://alexneiman.com/ai-creative-testing-low-budget-meta-ads/">Low-budget Meta creative testing</a> · <a href="https://ecomparkour.com/blog/spend-on-facebook-ads-for-dropshipping">Ad spend benchmarks for dropshipping</a></li>
-  <li><a href="https://help.dash.fi/article/382-share-business-assets-with-partners-meta-buisiness-suite">Meta: sharing business assets with partners</a> · <a href="https://geistm.com/business-manager-setup-meta-ads-guide/">Business Manager roles</a></li>
-  <li><a href="https://www.doba.com/blog/find-products-and-suppliers/niche-products/the-best-car-parts-and-accessories-to-dropship-in-2026-36992">Doba: car accessories to dropship 2026</a> · <a href="https://www.salehoo.com/learn/aliexpress-alternatives">SaleHoo: AliExpress alternatives (CJ, Zendrop US warehouses)</a></li>
-  <li>CB's vault: <em>synthesis-david-wehner-paid-ads-brain.md</em> (conditions + beliefs, test vs winners, 60/30/10)</li>
-</ul>
+<p class="note">Data behind this: 100 Amazon listings, 655 active US Meta ads, 89 Alibaba suppliers, TikTok Shop sold counts and 200 Reddit posts, all pulled 21 Oct 2026.</p>
 </div>
 
 </body>
